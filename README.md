@@ -10,3 +10,4 @@ Program description: A slot machine game based on the Japanese Ameba Pigg (ãƒ”ã‚
 
 Revision History (commits by Winnie Chung):  
 Feb.25, 2016: initial commit  
+Feb.26, 2016: added spin functionaility to reels, updated revision history
