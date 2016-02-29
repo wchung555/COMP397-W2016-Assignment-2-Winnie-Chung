@@ -21,6 +21,7 @@ var objects;
                 this.regX = this.width * 0.5;
                 this.regY = this.height * 0.5;
             }
+            this.isEnabled = true;
             this.on("mouseover", this.overButton, this);
             this.on("mouseout", this.outButton, this);
         }
@@ -32,6 +33,17 @@ var objects;
         // Event Handler for mouse out
         Button.prototype.outButton = function (event) {
             event.currentTarget.alpha = 1.0;
+        };
+        // remove event listeners
+        Button.prototype.disable = function () {
+            this.removeEventListener("mouseover", this.overButton);
+            this.removeEventListener("mouseout", this.outButton);
+            this.alpha = 0.5;
+        };
+        // re-enable event listeners
+        Button.prototype.enable = function () {
+            this.on("mouseover", this.overButton, this);
+            this.on("mouseout", this.outButton, this);
         };
         return Button;
     })(createjs.Bitmap);

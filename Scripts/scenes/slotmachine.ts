@@ -36,8 +36,6 @@ module scenes {
         private _heroes:number;
         private _robots:number;
         
-        private _isSpinning:boolean;
-        
         // CONSTRUCTOR ++++++++++++++++++++++
         constructor() {
             super();
@@ -71,8 +69,6 @@ module scenes {
             this._tuxes = 0;
             this._heroes = 0;
             this._robots = 0;
-            
-            this._isSpinning = false;
             
             for (var item = 0; item < 6 ; item++) {
                 if (item < 3) {
@@ -197,6 +193,44 @@ module scenes {
             
             // update the WINNINGS Label
             this._winningsLabel.text = this._winnings.toString(); 
+            
+            // update button status
+            if (this._totalCredits < 100) {
+                this._bet100Button.disable();
+            }
+            else {
+                this._bet100Button.enable();
+            }
+            
+            if (this._totalCredits < 50) {
+                this._bet50Button.isEnabled = false;
+            }
+            else {
+                this._bet50Button.isEnabled = true;
+            }
+            
+            if (this._totalCredits < 20) {
+                this._bet20Button.isEnabled = false;
+            }
+            else {
+                this._bet20Button.isEnabled = true;
+            }
+            
+            if (this._bet == 0) {
+                this._spinButton.isEnabled = false;
+            }
+            else {
+                this._spinButton.isEnabled = true;
+            }
+            
+            for (var i = 20; i < 24; i++) {
+                if (!(this.children[i] as objects.Button).isEnabled) {
+                    (this.children[i] as objects.Button).disable();
+                }
+                else {
+                    (this.children[i] as objects.Button).enable();
+                }
+            }
         }
         
         
@@ -350,6 +384,8 @@ module scenes {
         
         // spin animation
         private _animate():void {
+            this._disableAllButtons();
+            
             // change and move reel images
             for (var item = 0; item < 6 ; item++) {
                 if (item < 3) {
@@ -369,7 +405,9 @@ module scenes {
                 
                 createjs.Tween.get(this._leftReel[item]).to( {y:-168+85*item}, 1000, createjs.Ease.getPowInOut(4)); 
                 createjs.Tween.get(this._middleReel[item]).to( {y:-168+85*item}, 1000, createjs.Ease.getPowInOut(3));
-                createjs.Tween.get(this._rightReel[item]).to( {y:-168+85*item}, 1000, createjs.Ease.getPowInOut(2));             
+                createjs.Tween.get(this._rightReel[item]).to( {y:-168+85*item}, 1000, createjs.Ease.getPowInOut(2));
+                
+                this._enableAllButtons();
             }
         } // spin animation ends
         
@@ -402,10 +440,24 @@ module scenes {
             })
         }
         
+        // disable all buttons
+        private _disableAllButtons():void {
+            for (var i = 20; i < 24; i++) {
+                (this.children[i] as objects.Button).isEnabled = false;
+            }
+        }
+        
+        // enable all buttons
+        private _enableAllButtons():void {
+            for (var i = 20; i < 24; i++) {
+                (this.children[i] as objects.Button).isEnabled = true;
+            }
+        }
+        
         // EVENT HANDLERS ++++++++++++++++++++
         // PLAY Button click event handler
         private _bet10ButtonClick(event: createjs.MouseEvent) {
-            if (!this._isSpinning) {
+            if (this._bet10Button.isEnabled) {
                 if (this._checkRange(10, 0, this._totalCredits) != -1) {
                     console.log("Bet 10 credits");   
                     this._bet = 10;
@@ -417,7 +469,7 @@ module scenes {
         }
         
         private _bet20ButtonClick(event: createjs.MouseEvent) {
-            if (!this._isSpinning) {
+            if (this._bet20Button.isEnabled) {
                 if (this._checkRange(20, 0, this._totalCredits) != -1) { // check if user has enough credits
                     console.log("Bet 20 credits");
                     this._bet = 20;
@@ -429,7 +481,7 @@ module scenes {
         }
         
         private _bet50ButtonClick(event: createjs.MouseEvent) {
-            if (!this._isSpinning) {
+            if (this._bet50Button.isEnabled) {
                 if (this._checkRange(50, 0, this._totalCredits) != -1) { // check if user has enough credits
                     console.log("Bet 50 credits");
                     this._bet = 50;
@@ -441,7 +493,7 @@ module scenes {
         }
         
         private _bet100ButtonClick(event: createjs.MouseEvent) {
-            if (!this._isSpinning) {
+            if (this._bet100Button.isEnabled) {
                 if (this._checkRange(100, 0, this._totalCredits) != -1) { // check if user has enough credits
                     console.log("Bet 100 credits");
                     this._bet = 100;
@@ -452,30 +504,27 @@ module scenes {
             }            
         }
         
-        private _spinButtonClick(event: createjs.MouseEvent) {
-            if (!this._isSpinning) {
+        private _spinButtonClick(event: createjs.MouseEvent) {   
+            if (this._checkRange(this._bet, 10, this._totalCredits) < 0) { // ...or if the previous bet is still valid
+                console.log("Not enough credits");
+            }
+            else if (this._spinButton.isEnabled) {
                 console.log("Spin those reels!");
-                if (this._bet == 0) { // check if bet has been selected...
-                    console.log("Please select a bet");
+                this._spinButton.disable();
+                this._jackpot += this._bet;
+                this._totalCredits -= this._bet;
+                console.log("Bet Line: " + this._reels());
+                console.log("Win " + this._calculateWinnings() + " credits");
+                console.log("Credits remaining: " + this._totalCredits);
+                this._animate();
+                console.log("100:"+ (this._totalCredits < 100));                
+                console.log("50:"+ (this._totalCredits < 50));
+                console.log("20:"+ (this._totalCredits < 20));
+                if (this._totalCredits < 10) {
+                    console.log("Not enough credits to continue playing");
+                    this._exit();
                 }
-                else if (this._checkRange(this._bet, 10, this._totalCredits) < 0) { // ...or if the previous bet is still valid
-                    console.log("Not enough credits");
-                }
-                else {
-                    this._jackpot += this._bet;
-                    this._totalCredits -= this._bet;
-                    console.log("Bet Line: " + this._reels());
-                    console.log("Win " + this._calculateWinnings() + " credits");
-                    console.log("Credits remaining: " + this._totalCredits);
-                    this._isSpinning = true;
-                    this._animate();
-                    this._isSpinning = false;
-                    if (this._totalCredits < 10) {
-                        console.log("Not enough credits to continue playing");
-                        this._exit();
-                    }
-                }
-            }            
+            }           
         }
         
         private _resetButtonClick(event: createjs.MouseEvent) {

@@ -36,7 +36,6 @@ var scenes;
             this._tuxes = 0;
             this._heroes = 0;
             this._robots = 0;
-            this._isSpinning = false;
             for (var item = 0; item < 6; item++) {
                 if (item < 3) {
                     this._leftReel[item] = new createjs.Bitmap(assets.getResult(this._betLine[0][item]));
@@ -118,6 +117,39 @@ var scenes;
             this._betLabel.text = this._bet.toString();
             // update the WINNINGS Label
             this._winningsLabel.text = this._winnings.toString();
+            // update button status
+            if (this._totalCredits < 100) {
+                this._bet100Button.disable();
+            }
+            else {
+                this._bet100Button.enable();
+            }
+            if (this._totalCredits < 50) {
+                this._bet50Button.isEnabled = false;
+            }
+            else {
+                this._bet50Button.isEnabled = true;
+            }
+            if (this._totalCredits < 20) {
+                this._bet20Button.isEnabled = false;
+            }
+            else {
+                this._bet20Button.isEnabled = true;
+            }
+            if (this._bet == 0) {
+                this._spinButton.isEnabled = false;
+            }
+            else {
+                this._spinButton.isEnabled = true;
+            }
+            for (var i = 20; i < 24; i++) {
+                if (!this.children[i].isEnabled) {
+                    this.children[i].disable();
+                }
+                else {
+                    this.children[i].enable();
+                }
+            }
         };
         // PRIVATE METHODS +++++++++++++++++++++       
         // check if a value falls between a range of values
@@ -257,6 +289,7 @@ var scenes;
         }; //calculateWinnings method ends
         // spin animation
         SlotMachine.prototype._animate = function () {
+            this._disableAllButtons();
             // change and move reel images
             for (var item = 0; item < 6; item++) {
                 if (item < 3) {
@@ -275,6 +308,7 @@ var scenes;
                 createjs.Tween.get(this._leftReel[item]).to({ y: -168 + 85 * item }, 1000, createjs.Ease.getPowInOut(4));
                 createjs.Tween.get(this._middleReel[item]).to({ y: -168 + 85 * item }, 1000, createjs.Ease.getPowInOut(3));
                 createjs.Tween.get(this._rightReel[item]).to({ y: -168 + 85 * item }, 1000, createjs.Ease.getPowInOut(2));
+                this._enableAllButtons();
             }
         }; // spin animation ends
         // reset slot machine
@@ -302,10 +336,22 @@ var scenes;
                 changeScene();
             });
         };
+        // disable all buttons
+        SlotMachine.prototype._disableAllButtons = function () {
+            for (var i = 20; i < 24; i++) {
+                this.children[i].isEnabled = false;
+            }
+        };
+        // enable all buttons
+        SlotMachine.prototype._enableAllButtons = function () {
+            for (var i = 20; i < 24; i++) {
+                this.children[i].isEnabled = true;
+            }
+        };
         // EVENT HANDLERS ++++++++++++++++++++
         // PLAY Button click event handler
         SlotMachine.prototype._bet10ButtonClick = function (event) {
-            if (!this._isSpinning) {
+            if (this._bet10Button.isEnabled) {
                 if (this._checkRange(10, 0, this._totalCredits) != -1) {
                     console.log("Bet 10 credits");
                     this._bet = 10;
@@ -316,7 +362,7 @@ var scenes;
             }
         };
         SlotMachine.prototype._bet20ButtonClick = function (event) {
-            if (!this._isSpinning) {
+            if (this._bet20Button.isEnabled) {
                 if (this._checkRange(20, 0, this._totalCredits) != -1) {
                     console.log("Bet 20 credits");
                     this._bet = 20;
@@ -327,7 +373,7 @@ var scenes;
             }
         };
         SlotMachine.prototype._bet50ButtonClick = function (event) {
-            if (!this._isSpinning) {
+            if (this._bet50Button.isEnabled) {
                 if (this._checkRange(50, 0, this._totalCredits) != -1) {
                     console.log("Bet 50 credits");
                     this._bet = 50;
@@ -338,7 +384,7 @@ var scenes;
             }
         };
         SlotMachine.prototype._bet100ButtonClick = function (event) {
-            if (!this._isSpinning) {
+            if (this._bet100Button.isEnabled) {
                 if (this._checkRange(100, 0, this._totalCredits) != -1) {
                     console.log("Bet 100 credits");
                     this._bet = 100;
@@ -349,27 +395,24 @@ var scenes;
             }
         };
         SlotMachine.prototype._spinButtonClick = function (event) {
-            if (!this._isSpinning) {
+            if (this._checkRange(this._bet, 10, this._totalCredits) < 0) {
+                console.log("Not enough credits");
+            }
+            else if (this._spinButton.isEnabled) {
                 console.log("Spin those reels!");
-                if (this._bet == 0) {
-                    console.log("Please select a bet");
-                }
-                else if (this._checkRange(this._bet, 10, this._totalCredits) < 0) {
-                    console.log("Not enough credits");
-                }
-                else {
-                    this._jackpot += this._bet;
-                    this._totalCredits -= this._bet;
-                    console.log("Bet Line: " + this._reels());
-                    console.log("Win " + this._calculateWinnings() + " credits");
-                    console.log("Credits remaining: " + this._totalCredits);
-                    this._isSpinning = true;
-                    this._animate();
-                    this._isSpinning = false;
-                    if (this._totalCredits < 10) {
-                        console.log("Not enough credits to continue playing");
-                        this._exit();
-                    }
+                this._spinButton.disable();
+                this._jackpot += this._bet;
+                this._totalCredits -= this._bet;
+                console.log("Bet Line: " + this._reels());
+                console.log("Win " + this._calculateWinnings() + " credits");
+                console.log("Credits remaining: " + this._totalCredits);
+                this._animate();
+                console.log("100:" + (this._totalCredits < 100));
+                console.log("50:" + (this._totalCredits < 50));
+                console.log("20:" + (this._totalCredits < 20));
+                if (this._totalCredits < 10) {
+                    console.log("Not enough credits to continue playing");
+                    this._exit();
                 }
             }
         };
